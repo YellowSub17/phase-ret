@@ -13,10 +13,11 @@ class TwoDPhaseRet:
 
 
 
-    def __init__(self):
+    def __init__(self, obj_pix = 64, img_pix = 128, letter='o'):
 
-        self.obj_pix = 256
-        self.img_pix = 1024
+        self.obj_pix = obj_pix
+        self.img_pix = img_pix
+        self.letter = letter
 
         self.obj_bb = ( int((self.img_pix-self.obj_pix)/2), int((self.img_pix+self.obj_pix)/2) )
 
@@ -24,21 +25,67 @@ class TwoDPhaseRet:
         self.supp_arr = np.zeros( (self.img_pix, self.img_pix))
         self.supp_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = 1
 
+        self.supp_loc = np.where(self.supp_arr==1)
+        self.supp_notloc = np.where(self.supp_arr==0)
+
         self.obj_arr = np.zeros( (self.img_pix, self.img_pix))
-        self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_data('&')
+        self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_data(self.letter)
 
         self.dat_arr = np.abs( self.fft(self.obj_arr))**2
 
-        self.ite_arr  = np.random.random((img_pix, img_pix))
+
+        self.iter_rho_arr = np.random.random( (self.img_pix, self.img_pix))
+
+        self.iter_phi_arr = 2*np.pi*np.random.random( (self.img_pix, self.img_pix))
+        self.iter_psi_arr = np.sqrt(self.dat_arr)*np.exp(self.iter_phi_arr*1j)
+
+
+
+
+    def ER(self):
+        self.Pm()
+        self.Ps()
+
+
+
+    def HIO(self, beta=0.1):
+        rho_pm_in, rho_pm_out = self.Pm()
+        rho_ps_in, rho_ps_out = self.Ps()
+
+        self.iter_rho_arr[self.supp_loc] = self.iter_rho_arr[self.supp_loc]
+        self.iter_rho_arr[self.supp_notloc] = rho_pm_in[self.supp_notloc] - beta*rho_ps_out[self.supp_notloc]
+
+
 
 
 
     def Pm(self):
-        
+        rho_in = np.copy(self.iter_rho_arr)
+
+        self.psi_arr = self.fft(self.iter_rho_arr)
+
+        self.phi_arr = np.angle(self.psi_arr)
+
+        self.psip_arr = np.sqrt(self.dat_arr)*np.exp(self.phi_arr*1j)
+
+        self.iter_rho_arr = self.ifft(self.psip_arr).real
+
+        rho_out = np.copy(self.iter_rho_arr)
+
+        return rho_in, rho_out
 
 
 
+    def Ps(self):
+        rho_in = np.copy(self.iter_rho_arr)
 
+        self.rhop_arr = self.supp_arr*self.iter_rho_arr
+
+        self.iter_rho_arr = np.copy(self.rhop_arr)
+
+        rho_out = np.copy(self.iter_rho_arr)
+
+        return rho_in, rho_out
 
 
 
