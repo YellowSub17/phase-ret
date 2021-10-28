@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import cairo as pyc
 
 
-
+from skimage import io, color, transform, filters
 
 
 class TwoDPhaseRet:
 
 
 
-    def __init__(self, obj_pix = 64, img_pix = 128, letter='o'):
+    def __init__(self, obj_pix = 64, img_pix = 128, letter='o', perfect_supp=False):
 
         self.obj_pix = obj_pix
         self.img_pix = img_pix
@@ -21,71 +21,124 @@ class TwoDPhaseRet:
 
         self.obj_bb = ( int((self.img_pix-self.obj_pix)/2), int((self.img_pix+self.obj_pix)/2) )
 
-        ## set up support constraint array
-        self.supp_arr = np.zeros( (self.img_pix, self.img_pix))
-        self.supp_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = 1
-
-        self.supp_loc = np.where(self.supp_arr==1)
-        self.supp_notloc = np.where(self.supp_arr==0)
-
         self.obj_arr = np.zeros( (self.img_pix, self.img_pix))
-        self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_data(self.letter)
+        if letter=='cat':
+            self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_cat()
+        else:
+            self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_data(self.letter)
+
+        # self.obj_arr = self.obj_arr*10 +np.random.random(self.obj_arr.shape)
 
         self.dat_arr = np.abs( self.fft(self.obj_arr))**2
 
 
         self.iter_rho_arr = np.random.random( (self.img_pix, self.img_pix))
 
-        # self.iter_phi_arr = 2*np.pi*np.random.random( (self.img_pix, self.img_pix))
-        # self.iter_psi_arr = np.sqrt(self.dat_arr)*np.exp(self.iter_phi_arr*1j)
+        ## set up support constraint array
+        if perfect_supp:
+            self.supp_arr = np.copy(self.obj_arr)
+            self.supp_arr[np.where(self.supp_arr < 1)] = 0
+            self.supp_arr[np.where(self.supp_arr >= 1)] = 1
+        else:
+            self.supp_arr = np.zeros( (self.img_pix, self.img_pix))
+            self.supp_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = 1
+
+        self.supp_loc = np.where(self.supp_arr==1)
+        self.supp_notloc = np.where(self.supp_arr==0)
 
 
 
 
-    def ER(self):
-        self.Pm()
-        self.Ps()
+    def ER(self, ):
+        _, self.iter_rho_arr = self.Pm(self.iter_rho_arr)
+        _, self.iter_rho_arr = self.Ps(self.iter_rho_arr)
 
 
 
-    def HIO(self, beta=0.45):
-        rho_pm_in, rho_pm_out = self.Pm()
-        rho_ps_in, rho_ps_out = self.Ps()
+    def HIO(self, beta=0.99):
+
+        rho_pm_in, rho_pm_out = self.Pm(self.iter_rho_arr)
+        rho_pm_in, self.iter_rho_arr = self.Ps(self.iter_rho_arr)
 
         self.iter_rho_arr[self.supp_loc] = self.iter_rho_arr[self.supp_loc]
-        self.iter_rho_arr[self.supp_notloc] = rho_pm_in[self.supp_notloc] - beta*rho_ps_out[self.supp_notloc]
+        self.iter_rho_arr[self.supp_notloc] = rho_pm_in[self.supp_notloc] - beta*self.iter_rho_arr[self.supp_notloc]
 
+    def DM(self, beta=0.7, gamma_m=-1/0.7,  gamma_s=1/0.7):
 
-
-
-
-    def Pm(self):
         rho_in = np.copy(self.iter_rho_arr)
 
-        self.psi_arr = self.fft(self.iter_rho_arr)
+        _, p1 = self.Rm(rho_in, gamma_m)
+        _, p1 = self.Ps(p1)
 
-        self.phi_arr = np.angle(self.psi_arr)
+        _, p2 = self.Rs(rho_in, gamma_s)
+        _, p2 = self.Pm(p2)
 
-        # self.psip_arr = np.sqrt(self.dat_arr)*np.exp(self.phi_arr*1j)
-        self.psip_arr = self.dat_arr*np.exp(self.phi_arr*1j)
-        # self.psip_arr = (self.psi_arr/np.abs(self.psi_arr)) * self.dat_arr
 
-        self.iter_rho_arr = self.ifft(self.psip_arr).real
+        self.iter_rho_arr = rho_in + beta * (p1 -p2)
 
-        rho_out = np.copy(self.iter_rho_arr)
+
+    def shrinkwrap(self, thresh=0.1):
+
+        blurred = filters.gaussian(self.iter_rho_arr)
+
+        blurred_loc = np.where(blurred > thresh)
+
+        self.supp_arr = np.zeros(self.supp_arr.shape)
+        self.supp_arr[blurred_loc] = 1
+
+        self.supp_loc = np.where(self.supp_arr==1)
+        self.supp_notloc = np.where(self.supp_arr==0)
+
+
+
+
+
+
+
+
+
+
+
+    def Rm(self, rho_in,  gamma):
+
+        _, pm_out = self.Pm(rho_in)
+
+        rho_out = (1 + gamma)*pm_out - gamma*rho_in
+
+        return rho_in, rho_out
+
+
+    def Rs(self, rho_in,  gamma):
+
+        _, ps_out = self.Ps(rho_in)
+
+        rho_out = (1 + gamma)*ps_out - gamma*rho_in
 
         return rho_in, rho_out
 
 
 
-    def Ps(self):
-        rho_in = np.copy(self.iter_rho_arr)
 
-        self.rhop_arr = self.supp_arr*self.iter_rho_arr
 
-        self.iter_rho_arr = np.copy(self.rhop_arr)
+    def Pm(self, rho_in):
 
-        rho_out = np.copy(self.iter_rho_arr)
+        psi_arr = self.fft(rho_in)
+
+        phi_arr = np.angle(psi_arr)
+        # phi_arr = np.pi*2*np.random.random( psi_arr.shape)
+        # psip_arr = np.sqrt(self.dat_arr)*np.exp(phi_arr*1j)
+        psip_arr = np.sqrt(self.dat_arr)*psi_arr/np.abs(psi_arr)
+
+
+        rho_out = np.abs(self.ifft(psip_arr))
+
+        return rho_in, rho_out
+
+
+
+    def Ps(self, rho_in):
+
+        rho_out = self.supp_arr*rho_in
 
         return rho_in, rho_out
 
@@ -103,11 +156,21 @@ class TwoDPhaseRet:
         ctx.move_to(0.25 , 0.75)
         ctx.show_text(f'{letter}')
 
-        letter_array = np.ndarray( shape=(self.obj_pix, self.obj_pix),
-                                dtype=np.uint32, buffer = surf.get_data())
+        letter_array = np.ndarray( shape=(self.obj_pix, self.obj_pix), dtype=np.uint32, buffer = surf.get_data())
         letter_array[np.where(letter_array >0)] = 1
 
         return letter_array
+
+
+    def make_cat(self):
+
+        image = io.imread('./cat.png')
+        x_true = color.rgb2gray(color.rgba2rgb(image))
+        x_true = transform.resize(x_true, (self.obj_pix, self.obj_pix))
+        x_true /= np.max(x_true)
+
+        return x_true
+
 
 
 

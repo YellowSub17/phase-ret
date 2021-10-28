@@ -15,87 +15,93 @@ from twodphaseret import TwoDPhaseRet
 if __name__ == "__main__":
 
 
-    x = TwoDPhaseRet(obj_pix = 64, img_pix = 128, letter='A')
+    x = TwoDPhaseRet(obj_pix = 100, img_pix = 220, letter='%', perfect_supp=False)
+
     plt.figure()
-    plt.imshow(x.iter_rho_arr)
+    plt.imshow(x.obj_arr)
+    plt.title('Target')
 
 
-    x.ER()
     plt.figure()
-    plt.imshow(x.iter_rho_arr)
+    plt.imshow(np.log10(x.dat_arr+1))
+    plt.title('Measured Data')
 
-    x.ER()
     plt.figure()
-    plt.imshow(x.iter_rho_arr)
+    plt.imshow(x.supp_arr)
+    plt.title('Inital Support')
 
-    for i in range(200):
-        print(i)
 
-        for j in range(100):
+
+
+    # plt.figure()
+    # plt.imshow(np.abs(x.iter_rho_arr))
+    # x.ER()
+    # plt.figure()
+    # plt.imshow(np.abs(x.iter_rho_arr))
+
+
+
+    # for j in range(40):
+        # x.DM()
+
+        # if j%10==9:
+            # x.shrinkwrap()
+
+    # plt.figure()
+    # plt.imshow(np.abs(x.iter_rho_arr))
+
+
+
+
+
+
+
+    for _ in range(400):
+        x.HIO(beta=0.99)
+    for _ in range(100):
+        x.ER()
+
+    x.shrinkwrap()
+
+    for i in range(10):
+        for _ in range(400):
+            x.HIO(beta=0.1)
+
+        # plt.figure()
+        # plt.imshow(x.iter_rho_arr)
+        # plt.title(f'hio {i}')
+
+        for _ in range(400):
             x.ER()
-        for j in range(100):
-            x.HIO()
 
-        if i%20==9:
-            plt.figure()
-            plt.imshow(x.iter_rho_arr)
-
-
+        # plt.figure()
+        # plt.imshow(x.iter_rho_arr)
+        # plt.title(f'ER {i}')
+        x.shrinkwrap()
+        print(i, end='\r')
 
 
 
 
 
 
-    # for i in range(500):
-        # print(i, 'ER')
-        # x.ER()
-
-        # if i%100 ==99:
-            # plt.figure()
-            # plt.imshow(x.iter_rho_arr)
-            # plt.title(f'ER: {i}')
-            # plt.colorbar()
-
-
-
-
-    # for i in range(250):
-        # print(i, 'HIO')
-        # x.HIO()
-
-        # if i%100 ==99:
-            # plt.figure()
-            # plt.imshow(x.iter_rho_arr)
-            # plt.title(f'HIO: {i}')
 
 
 
 
 
-    # plt.figure()
-    # plt.title('Object')
-    # plt.imshow(x.obj_arr)
+    plt.figure()
+    plt.imshow(x.iter_rho_arr)
+    plt.title('Final Rho')
 
-    # plt.figure()
-    # plt.title('Support')
-    # plt.imshow(x.supp_arr)
-
-
-    # psi = x.fft(x.obj_arr)
-    # inten = np.abs(psi)**2
-
-    # plt.figure()
-    # plt.imshow(np.log10(inten+1))
-
-
-    # rho = x.ifft(psi).real
+    plt.figure()
+    plt.imshow(x.supp_arr)
+    plt.title('Final Support')
 
 
 
-    # plt.figure()
-    # plt.title('rho')
-    # plt.imshow(rho)
+
+
 
 
 

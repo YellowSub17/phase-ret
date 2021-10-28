@@ -17,7 +17,7 @@ def test_solution():
     plt.title('input')
     plt.colorbar()
 
-    iter_in, iter_out = x.Pm()
+    iter_in, iter_out = x.Pm(x.iter_rho_arr)
 
     plt.figure()
     plt.imshow(x.iter_rho_arr)
@@ -30,7 +30,7 @@ def test_idempotence():
     ### Test Idempotence
     x = TwoDPhaseRet( 64, 128, 's')
 
-    iter_1, iter_2 = x.Pm()
+    iter_1, iter_2 = x.Pm(x.iter_rho_arr)
 
     plt.figure()
     plt.imshow(x.iter_rho_arr)
@@ -42,7 +42,7 @@ def test_idempotence():
     plt.title('iter_2')
     plt.colorbar()
 
-    iter_3, iter_4 = x.Pm()
+    iter_3, iter_4 = x.Pm(x.iter_rho_arr)
 
     plt.figure()
     plt.imshow(x.iter_rho_arr)
@@ -60,8 +60,8 @@ if __name__ == "__main__":
 
 
 
-    # test_solution()
-    test_idempotence()
+    test_solution()
+    # test_idempotence()
 
 
     plt.show()
