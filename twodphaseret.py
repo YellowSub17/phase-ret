@@ -36,8 +36,8 @@ class TwoDPhaseRet:
 
         self.iter_rho_arr = np.random.random( (self.img_pix, self.img_pix))
 
-        self.iter_phi_arr = 2*np.pi*np.random.random( (self.img_pix, self.img_pix))
-        self.iter_psi_arr = np.sqrt(self.dat_arr)*np.exp(self.iter_phi_arr*1j)
+        # self.iter_phi_arr = 2*np.pi*np.random.random( (self.img_pix, self.img_pix))
+        # self.iter_psi_arr = np.sqrt(self.dat_arr)*np.exp(self.iter_phi_arr*1j)
 
 
 
@@ -48,7 +48,7 @@ class TwoDPhaseRet:
 
 
 
-    def HIO(self, beta=0.1):
+    def HIO(self, beta=0.45):
         rho_pm_in, rho_pm_out = self.Pm()
         rho_ps_in, rho_ps_out = self.Ps()
 
@@ -66,7 +66,9 @@ class TwoDPhaseRet:
 
         self.phi_arr = np.angle(self.psi_arr)
 
-        self.psip_arr = np.sqrt(self.dat_arr)*np.exp(self.phi_arr*1j)
+        # self.psip_arr = np.sqrt(self.dat_arr)*np.exp(self.phi_arr*1j)
+        self.psip_arr = self.dat_arr*np.exp(self.phi_arr*1j)
+        # self.psip_arr = (self.psi_arr/np.abs(self.psi_arr)) * self.dat_arr
 
         self.iter_rho_arr = self.ifft(self.psip_arr).real
 

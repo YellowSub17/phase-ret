@@ -15,61 +15,35 @@ from twodphaseret import TwoDPhaseRet
 if __name__ == "__main__":
 
 
-    ### Test Solution
-    x = TwoDPhaseRet( 64, 128, 's')
-
-    x.iter_rho_arr = np.copy(x.obj_arr)
-
+    x = TwoDPhaseRet(obj_pix = 64, img_pix = 128, letter='A')
     plt.figure()
     plt.imshow(x.iter_rho_arr)
-    plt.title('input')
-    plt.colorbar()
 
-    iter_in, iter_out = x.Pm()
 
+    x.ER()
     plt.figure()
     plt.imshow(x.iter_rho_arr)
-    plt.title('output')
-    plt.colorbar()
 
-
-
-
-    ### Test Idempotence
-    x = TwoDPhaseRet( 64, 128, 'i')
-
-
-    iter_1, iter_2 = x.Pm()
-
+    x.ER()
     plt.figure()
     plt.imshow(x.iter_rho_arr)
-    plt.title('iter_1')
-    plt.colorbar()
 
-    plt.figure()
-    plt.imshow(x.iter_rho_arr)
-    plt.title('iter_2')
-    plt.colorbar()
+    for i in range(200):
+        print(i)
 
-    iter_3, iter_4 = x.Pm()
+        for j in range(100):
+            x.ER()
+        for j in range(100):
+            x.HIO()
 
-    plt.figure()
-    plt.imshow(x.iter_rho_arr)
-    plt.title('iter_3')
-    plt.colorbar()
-
-    plt.figure()
-    plt.imshow(x.iter_rho_arr)
-    plt.title('iter_4')
-    plt.colorbar()
+        if i%20==9:
+            plt.figure()
+            plt.imshow(x.iter_rho_arr)
 
 
 
 
 
-
-
-    
 
 
 
