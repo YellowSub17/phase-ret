@@ -22,20 +22,18 @@ class TwoDPhaseRet(OperatorsMixin, SchemesMixin):
         self.img_pix = img_pix
         self.letter = letter
 
+        ## min and max values for the object bounds
         self.obj_bb = ( int((self.img_pix-self.obj_pix)/2), int((self.img_pix+self.obj_pix)/2) )
 
+        ## create target object
         self.obj_arr = np.zeros( (self.img_pix, self.img_pix))
         if letter=='cat':
             self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_cat()
         else:
             self.obj_arr[self.obj_bb[0]:self.obj_bb[1], self.obj_bb[0]:self.obj_bb[1]] = self.make_data(self.letter)
 
-        # self.obj_arr = self.obj_arr*10 +np.random.random(self.obj_arr.shape)
-
+        ## create measured diffraction pattern 
         self.dat_arr = np.abs( self.fft(self.obj_arr))**2
-
-
-        self.iter_rho_arr = np.random.random( (self.img_pix, self.img_pix))
 
         ## set up support constraint array
         if perfect_supp:
@@ -49,7 +47,8 @@ class TwoDPhaseRet(OperatorsMixin, SchemesMixin):
         self.supp_loc = np.where(self.supp_arr==1)
         self.supp_notloc = np.where(self.supp_arr==0)
 
-
+        ## initial random start
+        self.iter_rho_arr = np.random.random( (self.img_pix, self.img_pix))
 
 
 
@@ -65,14 +64,6 @@ class TwoDPhaseRet(OperatorsMixin, SchemesMixin):
 
         self.supp_loc = np.where(self.supp_arr==1)
         self.supp_notloc = np.where(self.supp_arr==0)
-
-
-
-
-
-
-
-
 
 
 

@@ -29,6 +29,13 @@ class OperatorsMixin:
         return rho_out
 
 
+    def Rm(self, rho_in, gamma=1):
+        return self.Ref_fn(rho_in, self.Pm, gamma)
+
+    def Rs(self, rho_in, gamma=1):
+        return self.Ref_fn(rho_in, self.Ps, gamma)
+
+
 
 
     def Pm(self, rho_in):
