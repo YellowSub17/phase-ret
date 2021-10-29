@@ -53,7 +53,9 @@ class TwoDPhaseRet(OperatorsMixin, SchemesMixin):
 
 
 
-    def shrinkwrap(self, thresh=0.1):
+    def shrinkwrap(self, thresh_percent=5):
+
+        thresh = np.max(self.iter_rho_arr)*(thresh_percent/100)
 
         blurred = filters.gaussian(self.iter_rho_arr)
 
