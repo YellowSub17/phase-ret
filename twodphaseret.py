@@ -8,8 +8,11 @@ import cairo as pyc
 
 from skimage import io, color, transform, filters
 
+from operators import OperatorsMixin
+from schemes import SchemesMixin
 
-class TwoDPhaseRet:
+
+class TwoDPhaseRet(OperatorsMixin, SchemesMixin):
 
 
 
@@ -49,32 +52,6 @@ class TwoDPhaseRet:
 
 
 
-    def ER(self, ):
-        _, self.iter_rho_arr = self.Pm(self.iter_rho_arr)
-        _, self.iter_rho_arr = self.Ps(self.iter_rho_arr)
-
-
-
-    def HIO(self, beta=0.99):
-
-        rho_pm_in, rho_pm_out = self.Pm(self.iter_rho_arr)
-        rho_pm_in, self.iter_rho_arr = self.Ps(self.iter_rho_arr)
-
-        self.iter_rho_arr[self.supp_loc] = self.iter_rho_arr[self.supp_loc]
-        self.iter_rho_arr[self.supp_notloc] = rho_pm_in[self.supp_notloc] - beta*self.iter_rho_arr[self.supp_notloc]
-
-    def DM(self, beta=0.7, gamma_m=-1/0.7,  gamma_s=1/0.7):
-
-        rho_in = np.copy(self.iter_rho_arr)
-
-        _, p1 = self.Rm(rho_in, gamma_m)
-        _, p1 = self.Ps(p1)
-
-        _, p2 = self.Rs(rho_in, gamma_s)
-        _, p2 = self.Pm(p2)
-
-
-        self.iter_rho_arr = rho_in + beta * (p1 -p2)
 
 
     def shrinkwrap(self, thresh=0.1):
@@ -97,50 +74,6 @@ class TwoDPhaseRet:
 
 
 
-
-
-    def Rm(self, rho_in,  gamma):
-
-        _, pm_out = self.Pm(rho_in)
-
-        rho_out = (1 + gamma)*pm_out - gamma*rho_in
-
-        return rho_in, rho_out
-
-
-    def Rs(self, rho_in,  gamma):
-
-        _, ps_out = self.Ps(rho_in)
-
-        rho_out = (1 + gamma)*ps_out - gamma*rho_in
-
-        return rho_in, rho_out
-
-
-
-
-
-    def Pm(self, rho_in):
-
-        psi_arr = self.fft(rho_in)
-
-        phi_arr = np.angle(psi_arr)
-        # phi_arr = np.pi*2*np.random.random( psi_arr.shape)
-        # psip_arr = np.sqrt(self.dat_arr)*np.exp(phi_arr*1j)
-        psip_arr = np.sqrt(self.dat_arr)*psi_arr/np.abs(psi_arr)
-
-
-        rho_out = np.abs(self.ifft(psip_arr))
-
-        return rho_in, rho_out
-
-
-
-    def Ps(self, rho_in):
-
-        rho_out = self.supp_arr*rho_in
-
-        return rho_in, rho_out
 
 
 
