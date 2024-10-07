@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 import cairo as pyc
 
-
 from skimage import io, color, transform, filters
 
 from operators import OperatorsMixin
